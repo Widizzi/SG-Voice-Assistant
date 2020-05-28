@@ -5,9 +5,18 @@ import time
 
 class TTSEngine:
 
+    SHORT_LETTERS = ['b', 'c', 'd', 'g', 'h', 'k', 'p', 't']
+    LONG_LETTERS = ['a', 'e', 'f', 'i', 'l', 'm', 'n', 'o', 'r', 's', 'u', 'w', 'ä', 'ö', 'ü', 'sch', 'ch']
+    UNUSED_LETTERS = ['j', 'q', 'v', 'y', 'z']
+    NOT_RECORDED_LETTERS = ['x']
+
     def __init__(self, fadezone=20):
         self.handler = FH.FileHandler()
         self.fadezone = fadezone
+        self.bigrams = []
+        for i in range(len(self.SHORT_LETTERS)):
+            for a in range(len(self.LONG_LETTERS) - 2):
+                self.bigrams.append(self.SHORT_LETTERS[i] + self.LONG_LETTERS[a])
 
     def run(self, phrase):
         phrase = phrase.lower()
@@ -15,10 +24,10 @@ class TTSEngine:
 
         # these arrays can be adjusted to change the performance on specific text
         # each array slot represents the volume and the spoken length of the corresponding letter in the input text
+        self.letterslices = phrase
         count = len(phrase)
         self.volume = [1.0] * count
         self.lenght = [8000] * count
-
         phrase = self.injectSoundData(phrase)
         phrase = self.cutSound(phrase)
         phrase = self.adjustVolume(phrase)
@@ -28,6 +37,9 @@ class TTSEngine:
 
     def collectSlices(self, phrase):
         output = []
+        found_bigrams = []
+        for i in range(len(self.bigrams)):
+            found_bigrams.append(self.findGroups(phrase, self.bigrams[i]))
         sch = self.findGroups(phrase, 'sch')
         ch = self.findGroups(phrase, 'ch')
         selected_ch = ch.copy()
@@ -44,8 +56,20 @@ class TTSEngine:
                 output.append('ch')
                 i += 2
             else:
-                output.append(phrase[i])
-                i += 1
+                no_bigram = True
+                for a in range(len(found_bigrams)):
+                    if i not in found_bigrams[a]:
+                        continue
+                    for q in range(len(found_bigrams[a])):
+                        if i == found_bigrams[a][q]:
+                            output.append(self.bigrams[a])
+                            i += 2
+                            break
+                    no_bigram = False
+                    break
+                if no_bigram:
+                    output.append(phrase[i])
+                    i += 1
         return output
 
     def findGroups(self, phrase, group):
