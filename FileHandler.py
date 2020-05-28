@@ -5,8 +5,8 @@ class FileHandler:
     ''' A Class used to read and write arrays from .txt files. 
     
     It's used to handle permanent storage of sounddata needed by the tts-engine.
-    Additionally to the reading function files can be written to save new data for
-    the tts-engine
+    Additionally to the reading function, files can be written to save new data for
+    the tts-engine or adjustet to change the volume
     '''
 
     def __init__(self):
@@ -50,10 +50,27 @@ class FileHandler:
         with open(self.path + name + ".txt", "r") as f:
             data =f.read()
             # deletes the brackets in the read string array
-            data = data.strip("[ ]")
+            data = data.replace('[', '')
+            data = data.replace(']', '')
             # saves the values splitted by a comma followed by a space in a string array
             data = data.split(", ")
             #casts each value from string to float for further usage
             for i in range(len(data)):
                 data[i] = float(data[i])
         return data
+
+
+    def changeVolume(self, name, gain):
+        ''' changes the overall volume of the given soundfile permanently
+
+        Parameters
+        ----------
+        name : str
+            name of the file to change without .txt extension
+        gain : float
+            Multiplicator for the volume (1.0 is no change)
+        '''
+        data = self.read(name)
+        for i in range(len(data)):
+            data[i] *= gain
+        self.write(data, name)
