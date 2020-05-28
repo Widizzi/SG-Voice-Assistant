@@ -50,7 +50,8 @@ class FileHandler:
         with open(self.path + name + ".txt", "r") as f:
             data =f.read()
             # deletes the brackets in the read string array
-            data = data.strip("[ ]")
+            data = data.replace('[', '')
+            data = data.replace(']', '')
             # saves the values splitted by a comma followed by a space in a string array
             data = data.split(", ")
             #casts each value from string to float for further usage
